@@ -26,7 +26,7 @@ type EventMetadata struct {
 // PersistedEventMetadata is the persisted metadata for an event.
 type PersistedEventMetadata struct {
 	// EntityVersion is the version of the entity after the event was added.
-	EntityVersion int
+	EntityVersion int64
 	// CreatedAt is the time the event was created.
 	CreatedAt time.Time
 	// TransactionId is the ID of the transaction that added the event.
@@ -50,4 +50,27 @@ type PersistedEventEnvelope struct {
 	Data []byte
 	// Metadata is the persisted metadata for the event.
 	Metadata PersistedEventMetadata
+}
+
+func AsPersistedEvents(
+	now time.Time,
+	transactionId string,
+	previousVersion int64,
+	events []EventEnvelope,
+) []PersistedEventEnvelope {
+	persistedEvents := make([]PersistedEventEnvelope, len(events))
+
+	for i, event := range events {
+		persistedEvents[i] = PersistedEventEnvelope {
+			Data: event.Data,
+			Metadata: PersistedEventMetadata {
+				EntityVersion: previousVersion + int64(i) + 1,
+				CreatedAt: now,
+				TransactionId: transactionId,
+				EventMetadata: event.Metadata,
+			},
+		}
+	}
+
+	return persistedEvents
 }
